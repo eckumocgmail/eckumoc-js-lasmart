@@ -1,0 +1,70 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+
+<div class="card" ng-app="PointsDiagramApp" ng-controller="PointsDiagramController">
+    <div class="card-header">
+        <h2>Диаграмма</h2>
+        <div style="padding: 10px;">
+            <span class="btn btn-sm btn-primary" ng-click="createDialog()">добавить</span>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-8">
+                    <div id="container" style="border: 1px solid black;"></div>
+                </div>
+                <div class="col-4">
+                    
+                    <div ng-hide="isCreateDialog==false">
+
+
+                        <div class="card">
+
+                            <div class="card-header" ng-init="createModel={x: 10, y: 50, r: 30, color: 'green'}">
+                                <b>Новый элемент</b>
+                                {{createModel}}
+                            </div>
+                            <div class="card-body">
+                                <div class="form-inline">
+                                  <div class="form-group" >
+                                    <label for="x">x</label>
+                                    <input type="number" class="form-control" ng-model="createModel.x" id="x" aria-describedby="x" >
+                                    <small class="form-text text-muted" hidden>We'll never share your email with anyone else.</small>
+                                  </div>
+                                  <div class="form-group">
+                                    <label for="Y">Y</label>
+                                    <input type="number" class="form-control" ng-model="createModel.y" id="y" aria-describedby="y" >
+                                    <small class="form-text text-muted" hidden>We'll never share your email with anyone else.</small>
+                                  </div>
+                                  <div class="form-group">
+                                    <label for="r">r</label>
+                                    <input type="number" class="form-control" ng-model="createModel.r" id="r" aria-describedby="r" >
+                                    <small class="form-text text-muted" hidden>We'll never share your email with anyone else.</small>
+                                  </div>    
+                                  <div class="form-group">
+                                    <label for="color">color</label>
+                                    <input type="color" class="form-control" ng-model="createModel.color" id="color" aria-describedby="color" >
+                                    <small class="form-text text-muted" hidden>We'll never share your email with anyone else.</small>
+                                  </div>   
+                              </div>
+                              <div class="form-group" style="padding: 10px;">
+                                <span class="btn btn-sm btn-primary" ng-click="createPoint(createModel)">сохранить</span>
+                                <span class="btn btn-sm btn-primary" ng-click="hideEditor()">отмена</span>
+                              </div>
+                            </div>
+                        </div>
+                    </div>
+                    <ul class="list-group" id="comments"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="/js/site.js">
+  
+                
+</script>
+ 

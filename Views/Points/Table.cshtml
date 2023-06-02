@@ -1,0 +1,166 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+<div class="card" ng-app="TableViewApp" ng-controller="TableViewController">
+    <div class="card-header">
+        <span class="btn btn-sm btn-primary" ng-if="editorIsVisible==false" ng-click="showEditor()">
+            добавить
+        </span>
+    </div>
+    <div class="card-body"  >
+       
+        <div ng-if="editorIsVisible==true" class="card">
+            <div class="card-header">
+                Новый элемент
+            </div>
+            <div class="card-body">
+              <div class="form-inline">
+                  <div class="form-group" >
+                    <label for="x">x</label>
+                    <input type="number" class="form-control" ng-model="$parent.point.x" id="x" aria-describedby="x" >
+                    <small class="form-text text-muted" hidden>We'll never share your email with anyone else.</small>
+                  </div>
+                  <div class="form-group">
+                    <label for="Y">Y</label>
+                    <input type="number" class="form-control" ng-model="$parent.point.y" id="y" aria-describedby="y" >
+                    <small class="form-text text-muted" hidden>We'll never share your email with anyone else.</small>
+                  </div>
+                  <div class="form-group">
+                    <label for="r">r</label>
+                    <input type="number" class="form-control" ng-model="$parent.point.r" id="r" aria-describedby="r" >
+                    <small class="form-text text-muted" hidden>We'll never share your email with anyone else.</small>
+                  </div>    
+                  <div class="form-group">
+                    <label for="color">color</label>
+                    <input type="color" class="form-control" ng-model="$parent.point.color" id="color" aria-describedby="color" >
+                    <small class="form-text text-muted" hidden>We'll never share your email with anyone else.</small>
+                  </div>   
+              </div>
+              <div class="form-group" style="padding: 10px;">
+                <span class="btn btn-sm btn-primary" ng-click="$parent.addPoint($parent.point)">сохранить</span>
+                <span class="btn btn-sm btn-primary" ng-click="hideEditor()">отмена</span>
+              </div>   
+            </div>
+            
+        </div>
+        <div class="container-fluid">
+            <div class="row">
+                
+             
+                <div class="col-9">
+                    <table class="table" ng-if="editorIsVisible==false" >
+                      <thead>
+                        <tr>
+                          <th scope="col">#</th>
+                          <th scope="col">x</th>
+                          <th scope="col">y</th>
+                          <th scope="col">r</th>
+                          <th scope="col">color</th>
+                          <th scope="col">actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                         <tr ng-repeat="point in points" ng-click="selectPoint(point)" 
+                             class="{{selected==point? 'bg-info':''}}" >
+                             <th scope="row">{{$index}}</th>
+                             <th scope="row">{{point.x}}</th>
+                             <th scope="row">{{point.y}}</th>
+                             <th scope="row">{{point.r}}</th>
+                             <th scope="row">{{point.color}}</th>
+                             <th scope="row">                               
+                                 <span class="btn btn-sm btn-primary" 
+                                       ng-click="deletePoint(point.id)">
+                                       delete
+                                 </span>
+                                 <span class="btn btn-sm btn-primary" \
+                                       ng-click="selectPoint(point)">
+                                       select
+                                 </span>
+                             </th>
+       
+                         </tr>
+                      </tbody>
+                    </table>
+                </div>
+
+                <div class="col-3 card" ng-if="selected" >
+                    <div class="card-header">
+                        <div class="text-center">Комментарии</div>
+                        <div style="padding: 10px;">
+                            <span class="btn btn-sm btn-primary" ng-click="addComment(selected, 'Новый комментарий')" >добавить</span>
+                        </div>
+                    </div>
+                    
+                    <ul class="list-group">
+                        <li class="list-group-item" ng-repeat="comment in selected.comments">
+                            <div class="d-flex flex-row flex-nowrap w-100">
+                                <div style="width: 100%;" contenteditable ng-change="updateCommentMessage()">{{comment.message}}</div>
+                                <div class="btn btn-sm btn-info">del</div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+
+</script>
+<script src="~/lib/kendo/angular.min.js"></script>
+<script>
+    angular.module('TableViewApp',[]).controller('TableViewController',
+    function( $scope ){
+        window['app'] = $scope;
+        $scope.points = [];   
+        $scope.selected = false;
+        $scope.point = {x:0,y:0,r:0,color: 'black', comments: [], color: '#000430'};
+        $scope.addPoint = function( data ){
+            $scope.points.push(data);                              
+            $scope.editorIsVisible = false;
+            $scope.point = {x:0,y:0,r:0,color: 'black', comments: []};            
+            window['HttpClient'].editorIsVisible(data, function (result){
+                data.validated = data.id == result;
+                
+            });
+            
+        }
+        $scope.deletePoint = function(id){
+            window['HttpClient'].deletePoint(id);
+            $scope.points = $scope.points.filter(point => point.id!=id);
+        }
+        $scope.addComment = function( point, message ){
+            window['HttpClient'].postComment(point.id, message, function (result){                              
+                point.comments.push({message: message, id: result});  
+                $scope.$apply();
+            });            
+        }
+        $scope.selectPoint = function(point){
+            if($scope.selected == point){
+                $scope.selected = false;
+            }else{
+                $scope.selected = point;
+            }            
+        }
+        
+        $scope.hideEditor = function(){
+            $scope.editorIsVisible = true;
+        }
+        $scope.showEditor = function(){
+            $scope.editorIsVisible = true;
+        };
+        $scope.editorIsVisible = false;
+          
+        $scope.httpClient = window['HttpClient'];
+        window['HttpClient'].getAll((data)=>{
+
+            data.forEach((item,index)=>{
+                $scope.points.push(item);
+                $scope.$apply();
+            });
+            console.log($scope.points);
+        });        
+    });
+</script>
