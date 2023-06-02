@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace eckumoc_js_lasmart.Controllers
@@ -22,15 +24,20 @@ namespace eckumoc_js_lasmart.Controllers
             {
                 return NoContent();
             }
-            else
+            else 
             {
                 db.Comments.Remove(comment);
                 await db.SaveChangesAsync();
                 return Ok(comment.Id);
             }
         }
-        public async Task<IActionResult> AddComment([FromServices] PointsDbContext db, int id, string message, string color)
-        {
+
+        public async Task<IActionResult> AddComment(
+            [FromServices] PointsDbContext db, 
+            int id, string color = "#010101" )
+       {             
+            var message = new StreamReader(Request.Body).ReadToEnd();
+
             _logger.LogInformation("AddComment", id, message, color);
             var point = await db.Points.Include(p => p.Comments).FirstOrDefaultAsync(p => p.Id == id);
             if (point == null)
@@ -48,7 +55,7 @@ namespace eckumoc_js_lasmart.Controllers
                 point.Comments.Add(comment);
                 if (await db.SaveChangesAsync() != 0)
                 {
-                    return Ok(comment.Id);
+                    return Created("/Points/AddComment", comment.Id);
                 }
                 else
                 {
@@ -56,6 +63,8 @@ namespace eckumoc_js_lasmart.Controllers
                 }
             }
         }
+
+
         [HttpGet]
         public async Task<IActionResult> GetAll([FromServices] PointsDbContext db)
         {
@@ -63,11 +72,21 @@ namespace eckumoc_js_lasmart.Controllers
             var data = await db.Points.Include(p => p.Comments).ToListAsync();
             return Json(data);
         }
-        [HttpPut]
+
+        [HttpGet]
+        public async Task<IActionResult> GetAll([FromServices] PointsDbContext db, int id)
+        {
+            _logger.LogInformation("Get");
+            var data = await db.Points.Include(p => p.Comments).FirstOrDefaultAsync(p=>p.Id==id);
+            if(data == null)            
+                return NotFound(id);            
+            return Json(data);
+        }
+
         [HttpPost]
         public async Task<IActionResult> Create([FromServices] PointsDbContext db, int x, int y, int r, string color)
         {
-            _logger.LogInformation("Create", x, y, r, color);
+            _logger.LogInformation($"Create(x={x},y={y},r={r},color={color})");
             var point = new Point()
             {
                 X = x,
@@ -79,7 +98,7 @@ namespace eckumoc_js_lasmart.Controllers
             db.Points.Add(point);
             if (await db.SaveChangesAsync() != 0)
             {
-                return Ok(point.Id);
+                return Created("/Points/Get", point.Id);
             }
             else
             {
@@ -87,26 +106,26 @@ namespace eckumoc_js_lasmart.Controllers
             }
         }
 
-        [HttpGet]
+        
         [HttpDelete]
-        public async Task<IActionResult> Delete([FromServices] PointsDbContext db, int Id)
+        public async Task<IActionResult> Delete([FromServices] PointsDbContext db, int id)
         {
-            _logger.LogInformation("Delete", Id);
-            var point = await db.Points.FindAsync(Id);
+            _logger.LogInformation("Delete", id);
+            var point = await db.Points.FindAsync(id);
             if (point == null)
             {
-                return NotFound(Id);
+                return NotFound(id);
             }
             else
             {
                 db.Points.Remove(point);
                 if (await db.SaveChangesAsync() != 0)
                 {
-                    return Ok(Id);
+                    return Ok(id);
                 }
                 else
                 {
-                    return NotFound(Id);
+                    return NotFound(id);
                 }
             }
         }

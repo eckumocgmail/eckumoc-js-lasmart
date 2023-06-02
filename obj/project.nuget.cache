@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "A/qJlyIxNBF+nSLzSVhuloRO/DiWs+Pxjqz0VmPru8DysaJr4kQkpoNQSkaEbrQ2ZG/GdDg9yq3wcoVR5+EcEA==",
+  "dgSpecHash": "4ZUgGBlEiujzzhqxk3XZfttMKRXvpRdrxlivtOdES0egtMeKVyZmqkHcz1WtE/4jpvGZ1ogbhQM6pUsaK4DBIA==",
   "success": true,
-  "projectFilePath": "D:\\Projects-GitHub\\webapi-delivery\\eckumoc-js-lasmart\\eckumoc-js-lasmart.csproj",
+  "projectFilePath": "D:\\Projects-GitHub\\eckumoc-js-lasmart\\eckumoc-js-lasmart.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\reuser\\.nuget\\packages\\microsoft.entityframeworkcore\\5.0.17\\microsoft.entityframeworkcore.5.0.17.nupkg.sha512",
     "C:\\Users\\reuser\\.nuget\\packages\\microsoft.entityframeworkcore.abstractions\\5.0.17\\microsoft.entityframeworkcore.abstractions.5.0.17.nupkg.sha512",

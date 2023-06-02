@@ -1,93 +1,85 @@
-﻿// Please see documentation at https://docs.microsoft.com/aspnet/core/client-side/bundling-and-minification
-// for details on configuring this project to bundle and minify static web assets.
-
-// Write your JavaScript code.
-window['HttpClient'] = {
-    postComment: function (id, message, completed) {
-        var target = this;
-        return new window['Promise'](function (success, terminated) {
-            target.postData(`/Points/AddComment?id=${id}&message=${message}`, function (result) {
-                completed(parseInt(result)); 
-            }, null);
-        });
-    },
-    getText: function (url, callback, data) {
-        return new window['Promise'](function (resolve, reject) {
-            var req = new XMLHttpRequest();
-            req.open('get', url, true);
-            req.onload = function () {
-                callback(req.responseText);
-            };
-            req.onerror = function (e) {
-                reject(e);
-            };
-            req.send(data);
-        });
-    },
-    postData: function (url, callback, data) {
-        return new window['Promise'](function (resolve, reject) {
-            var req = new XMLHttpRequest();
-            req.open('post', url, true);
-            req.onload = function () {
-                callback(req.responseText);
-            };
-            req.onerror = function (e) {
-                reject(e);
-            };
-            req.send(data);
-        });
-    },
-    getJson: function (url, callback, data) {
-        var target = this;
-        return new window['Promise'](function (resolve, reject) {
-            target.getText(url, function (text) {
-                var result = JSON.parse(text);
-                callback(result);
-            }, data);
-        });
-    },
-    createPoint: function (data, completed) {
-        var target = this;
-        return new window['Promise'](function (success, terminated) {
-             
-            target.postData(`/Points/Create?x=${data.x}&y=${data.y}&r=${data.r}&color=${data.color}`, function (result) {
-                
-                data.id = parseInt(result);
-
-         
-                completed(data);
-            }, data);
-        });
-    },
-    getAll: function (handleData) {
-        var target = this;
-        return new window['Promise'](function (success, terminated) {
-            target.getJson('/Points/GetAll', function (data) {
-                if (handleData)
-                    handleData(data);
-            }, null);
-        });
-    },
-    deletePoint: function (id) {
-        var target = this;
-        return new window['Promise'](function (success, terminated) {
-            target.getText('/Points/Delete?Id=' + id, success, null).catch(terminated);
-        });
-    }
-};
+﻿angular.module('HttpClientModule', []).service('$points', function ($http) {
+    return {
 
 
+        async $getAll() {
+            const response = await $http.get('/Points/GetAll', {});
+            if (response.status != 200) {
+                throw new {
+                    message: response
+                };
+            } else {
+                return response.data;
+            }
+
+        },
+        $delete(id) {
+            return new Promise((success, failed) => {
+                $http.delete(`/Points/Delete?id=${id}`, {}, {})
+                    .then((response) => {
+                        if (response.status != 200) {
+                            failed({ message: 'Http статус говорит о том что запрос не выполнен' });
+                        } else {
+                            success(response.data);
+                        }
+
+                    }, (error) => {
+                        failed(error);
+                    });
+            });
+        },
 
 
+        $create(model) {
+            return new Promise((resolve, reject) => {
+                console.info('create: ', model);
+                const color = encodeURI(model.color);
+                const uri = `/Points/Create?x=${model.x}&y=${model.y}&r=${model.r}&color=${model.color}`;
+                console.info('create: ', uri);
 
-angular.module('PointsDiagramApp', [], function ($provide) {
+                var post = $http.post(uri, {}, {});
+                post.then((response) => {
+                    console.info(response);
+                    console.info(`${response.config.method} ${response.config.url} ${response.status} => ${response.data}`);
+                    if (response.status == 201) {
+                        resolve((response.data));
+                    } else {
+                        reject({ message: `HttpError ${response.method} ${response.url} ${response.status} => ${response.data}` });
+                    }
+                });
+            });
+
+
+        },
+
+        async $addComment(idPoint, model) {
+            console.info(`$addComment(${idPoint} ${model})`);
+
+            const response = await $http.post(`/Points/AddComment?id=${idPoint}`, model, {})
+            if (response.status == 200) {
+                return response.data;
+            } else {
+                throw {
+                    method: '$addComment',
+                    message: 'Статус запроса говорит что успеха так и не добились.'
+                }
+            }
+        },
+        $removeComment() { }
+    };
+});
+
+
+//// PointsDiagramApp
+angular.module('PointsDiagramApp', ['HttpClientModule'], function ($provide) {
     console.info('PointsDiagramApp');
     if (!window['Konva']) {
         throw {
             message: 'Необходимо загрузить зависимость Konva.js'
         };
     }
-}).controller('PointsDiagramController', function ($scope, $points, $diagram) {
+}).controller('PointsDiagramController',
+    function ($scope, $points, $diagram) {
     console.info('PointsDiagramController');
     window['ctrl'] = $scope;
     Object.assign($scope, {
@@ -98,10 +90,13 @@ angular.module('PointsDiagramApp', [], function ($provide) {
     Object.assign($scope, $scope.$diagram = $diagram);
     $scope.updateData = function () {
         $points.$getAll().then($diagram.$load);
-
     }
-    $scope.createPoint = function (model) {
+    $scope.createModel = { x: 1, y: 2, r: 1, color: '#000000', id: -1 };
+    $scope.$createPoint = function (model) {
+        model = !model ? $scope.createModel : model;
         console.info(`createPoint(${model})`);
+        if (!model)
+            throw { message: 'Аргумент model не может содержать  значение null' }
         $points.$create(model).then(
             (data) => {
 
@@ -131,57 +126,8 @@ angular.module('PointsDiagramApp', [], function ($provide) {
 
 
     $scope.updateData();
-    $scope.createPoint();
-
-}).service('$points', function ($http) {
-    return {
 
 
-        async $getAll() {
-            const response = await $http.get('/Points/GetAll', {});
-            if (response.status != 200) {
-                throw new {
-                    message: response
-                };
-            } else {
-                return response.data;
-            }
-
-        },
-        async $delete(id) {
-            return await $http.delete('/Points/Create', { id: id }, {})
-        },
-
-        $create(model) {
-            return new Promise((resolve, reject) => {
-                $http.post('/Points/Create', model, {}).then(
-                    function ensureStatusCodeCorrect(response) {
-                        if (response.status != 204) {
-                            resolve(response.data);
-                        } else {
-                            reject(response.data);
-                        }
-                    },
-                    reject
-                ).then(resolve, reject);
-
-
-            });
-        },
-
-        async $addComment(idPoint, commectModel) {
-            const result = await $http.post(`/Points/AddComment?id=${id}`, commentModel, {})
-            if (response.status == 200) {
-                return response.data;
-            } else {
-                throw {
-                    method: '$addComment',
-                    message: 'Статус запроса говорит что успеха так и не добились.'
-                }
-            }
-        },
-        $removeComment() { }
-    };
 }).service('$diagram', function ($rootScope, $points) {
 
     let target = {
@@ -190,17 +136,14 @@ angular.module('PointsDiagramApp', [], function ($provide) {
 
         $addItem(item) {
 
-            const control = {
+            return target.dataset.push(Object.assign(item, {
                 model: item,
                 type: 'point',
                 click() {
                     alert('clicked');
-                },
-                get $id() { return dataitem.id; }
-            }
-
-            target.dataset.push(control);
-            target.ring = target.rect = target.$point(control.model);
+                }
+            }));
+            //target.ring = target.rect = target.$point(control.model);
         },
 
         $load(dataset) {
@@ -215,8 +158,10 @@ angular.module('PointsDiagramApp', [], function ($provide) {
         $point(point) {
             if (!point)
                 return;
+            if (!target.group)
+                throw { message: 'Рабочая область ещё не готова' };
             target.group.add(point.rect = new window['Konva'].RegularPolygon({
-                x: point.x?point.x: 111,
+                x: point.x ? point.x : 111,
                 y: point.y ? point.y : 111,
                 sides: 5,
                 radius: point.r ? point.r : 111,
@@ -286,7 +231,7 @@ angular.module('PointsDiagramApp', [], function ($provide) {
                     console.info(layer);
                     if (point.ring) point.ring.destroy();
                     if (point.ring) point.rect.destroy();
-                    points = points.filter(function (p) { return p.id != point.id; });
+                    points = target.dataset.map(item => item.model).filter(function (p) { return p.id != point.id; });
                 }
             });
 
@@ -323,3 +268,74 @@ angular.module('PointsDiagramApp', [], function ($provide) {
     };
     return target;
 });
+
+angular.module('TableViewApp', ['HttpClientModule'], function () {
+    console.info('TableViewApp');
+}).controller('TableViewController',
+    function ($scope, $points) {
+        console.info('TableViewController');
+        window['ctrl'] = Object.assign($scope, {
+            $points: $points
+        });
+       
+        $scope.selected = false;
+        $scope.editorIsVisible = false;
+        $scope.point = { x: 10, y: 10, r: 10, color: '#000000', comments: [], color: '#000430' };
+        $scope.points = [];
+        $points.$getAll(dataset => {
+            $scope.points = dataset;
+            $scope.editorIsVisible = false;
+            $scope.$apply();
+        });
+        $scope.createPoint = function (data) {
+            console.info(`createPoint: `, data);
+            $points.$create(data).then(id => {
+                console.info(`created: ${id}`);
+                
+            }).then(result => {
+                $points.$getAll().then(dataset => {
+                    $scope.points = dataset;
+                    $scope.editorIsVisible = false;
+                    $scope.$apply();
+                    console.info(`$scope: `, $scope.points);
+                    console.info(`$view: `, editorIsVisible ? 'form' : 'table');
+                });
+            });
+
+        }       
+        $scope.deletePoint = function (id) {
+            $points.$delete(id).then(id => {
+                $points.$getAll().then(dataset => {
+                    $scope.points = dataset;
+                    $scope.$apply();
+                });                
+            });
+            
+        }
+        $scope.addComment = function (point, message) {
+            return $points.$addComment(point, message);
+        }
+        $scope.selectPoint = function (point) {
+            if ($scope.selected == point) {
+                $scope.selected = false;
+            } else {
+                $scope.selected = point;
+            }
+        }
+
+        $scope.hideEditor = function () {
+            $scope.editorIsVisible = true;
+        }
+        $scope.showEditor = function () {
+            $scope.editorIsVisible = true;
+        };
+        $scope.editorIsVisible = false; 
+        $points.$getAll().then((data) => {
+
+            data.forEach((item, index) => {
+                $scope.points.push(item);
+                $scope.$apply();
+            });
+            console.log($scope.points);
+        });
+    });

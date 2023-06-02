@@ -1,0 +1,1 @@
+﻿cmd "d: && cd D:\Projects-GitHub\eckumoc-js-lasmart && dotnet watch run"
