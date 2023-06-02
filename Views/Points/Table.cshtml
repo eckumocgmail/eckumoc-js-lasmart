@@ -48,37 +48,39 @@
                 
              
                 <div class="col-9">
-                    <table class="table" ng-if="editorIsVisible==false" >
-                      <thead>
-                        <tr>
-                          <th scope="col">#</th>
-                          <th scope="col">id</th>
-                          <th scope="col">x</th>
-                          <th scope="col">y</th>
-                          <th scope="col">r</th>
-                          <th scope="col">color</th>
-                          <th scope="col">actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                         <tr ng-repeat="point in points" ng-click="selectPoint(point)" 
-                             class="{{selected==point? 'bg-info':''}}" >
-                             <th scope="row">{{$index}}</th>
-                             <th scope="row">{{point.id}}</th>
-                             <th scope="row">{{point.x}}</th>
-                             <th scope="row">{{point.y}}</th>
-                             <th scope="row">{{point.r}}</th>
-                             <th scope="row">{{point.color}}</th>
-                             <th scope="row">                               
-                                 <span class="btn btn-sm btn-primary" 
-                                       ng-click="$parent.deletePoint(point.id)">
-                                       delete
-                                 </span>                                 
-                             </th>
+                    <div class="container-fluid" style="width: 100%;">
+                        <table class="table w-100"  ng-if="editorIsVisible==false" >
+                          <thead>
+                            <tr>
+                              <th scope="col">#</th>
+                              <th scope="col">id</th>
+                              <th scope="col">x</th>
+                              <th scope="col">y</th>
+                              <th scope="col">r</th>
+                              <th scope="col">color</th>
+                              <th scope="col">actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                             <tr ng-repeat="point in points" ng-click="selectPoint(point)" 
+                                 class="{{selected==point? 'bg-info':''}}" >
+                                 <th scope="row">{{$index}}</th>
+                                 <th scope="row">{{point.id}}</th>
+                                 <th scope="row">{{point.x}}</th>
+                                 <th scope="row">{{point.y}}</th>
+                                 <th scope="row">{{point.r}}</th>
+                                 <th scope="row">{{point.color}}</th>
+                                 <th scope="row" onclick="event.preventDefault(); event.stopPropagation();">                               
+                                     <span class="btn btn-sm btn-primary"                                        
+                                           ng-click="$parent.deletePoint(point.id)">
+                                           delete
+                                     </span>                                 
+                                 </th>
        
-                         </tr>
-                      </tbody>
-                    </table>
+                             </tr>
+                          </tbody>
+                        </table>
+                    </div>
                 </div>
 
                 <div class="col-3 card" ng-if="selected" >

@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace eckumoc_js_lasmart.Controllers
@@ -35,8 +36,12 @@ namespace eckumoc_js_lasmart.Controllers
         public async Task<IActionResult> AddComment(
             [FromServices] PointsDbContext db, 
             int id, string color = "#010101" )
-       {             
-            var message = new StreamReader(Request.Body).ReadToEnd();
+       {
+
+
+            var buffer = new byte[this.HttpContext.Request.Body.Length];
+            await this.HttpContext.Request.Body.ReadAsync(buffer, 0, (int)this.HttpContext.Request.Body.Length);
+            var message = Encoding.UTF8.GetString(buffer, 0, buffer.Length);
 
             _logger.LogInformation("AddComment", id, message, color);
             var point = await db.Points.Include(p => p.Comments).FirstOrDefaultAsync(p => p.Id == id);
@@ -74,7 +79,7 @@ namespace eckumoc_js_lasmart.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll([FromServices] PointsDbContext db, int id)
+        public async Task<IActionResult> Get([FromServices] PointsDbContext db, int id)
         {
             _logger.LogInformation("Get");
             var data = await db.Points.Include(p => p.Comments).FirstOrDefaultAsync(p=>p.Id==id);
